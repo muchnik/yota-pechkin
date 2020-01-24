@@ -21,12 +21,16 @@ fun main(args: Array<String>) {
 
 data class YotaMessage(
         val token: String?,
+        val messageId: Long,
         val from: User,
         val to: User,
-        val message: String
+        val message: String,
+        val addresses: List<Address>
 )
 
-data class Response(val reason: String)
+data class Address(val id: Long, val street: String, val houseColor: String)
+
+data class Response(val message: String)
 
 data class User(
         val id: Long,
@@ -38,10 +42,11 @@ data class User(
 
 @RestController
 class PechkinController {
-    @PostMapping("/api/v1/dostavit-bistro")
-    fun receive(@RequestBody message: YotaMessage, @RequestHeader("x-info") xInfo: String): ResponseEntity<*> = when {
-        message.token.isNullOrBlank() -> status(HttpStatus.BAD_REQUEST).body(Response("Требуется особо секретный token"))
-        currentTimeMillis() % 2 == 0L -> status(HttpStatus.INTERNAL_SERVER_ERROR).body(Response("Извини, устал педали крутить..."))
-        else                          -> ok(Response("Доставим мы посылочку вашему мальчику ${message.to.firstName}, не волнуйтесь!"))
+    @PostMapping("/api/v1/deliver")
+    fun receive(@RequestBody message: YotaMessage): ResponseEntity<*> = when {
+        message.token.isNullOrBlank()     -> status(HttpStatus.BAD_REQUEST).body(Response("Требуется особо секретный token"))
+        message.addresses.isNullOrEmpty() -> status(HttpStatus.BAD_REQUEST).body(Response("Куда же я доставлять посылочку буду? Где адреса?"))
+        currentTimeMillis() % 2 == 0L     -> status(HttpStatus.INTERNAL_SERVER_ERROR).body(Response("Извини, устал педали крутить..."))
+        else                              -> ok(Response("Доставим мы посылочку вашему мальчику ${message.to.firstName}, не волнуйтесь!"))
     }
 }
